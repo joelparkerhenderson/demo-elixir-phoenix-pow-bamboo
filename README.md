@@ -1,12 +1,22 @@
-# Demo of Elixir + Phoenix + Pow
+# Demo of Elixir + Phoenix + Pow + Bamboo
 
-Demonsrate:
+Demonstrate:
 
-* [Elixir](https://elixir-lang.org/): Dynamic, functional language designed for building scalable and maintainable applications.
+* Elixir language
+* Phoenix framework
+* Pow authentication 
+* Bamboo emailer
 
-* [Phoenix](https://www.phoenixframework.org/): Productive web framework with speed and maintainability.
+Contents:
 
-* [Pow](https://powauth.com): Robust, modular, and extendable user authentication system.
+* [How to create this demo](#how-to-create-this-demo)
+  * [Preflight](#preflight)
+  * [Create a typical Elixir Phoenix app](#create-a-typical-elixir-phoenix-app)
+  * [Add Pow authentication](#add-pow-authentication)
+  * [Add links to sign in and sign out](#add-links-to-sign-in-and-sign-out)
+  * [Add Pow extensions for email](#add-pow-extensions-for-email)
+  * [Mailer support](#mailer-support)
+* [Learn more](#learn-more)
 
 
 ## How to create this demo
@@ -45,12 +55,6 @@ Install dependencies:
 mix deps.get
 ```
 
-Check if any of the dependencies are outdated and thus need updates:
-
-```sh
-mix hex.outdated
-```
-
 Create and migrate your database:
 
 ```sh
@@ -73,6 +77,34 @@ mix phx.server
 ```
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+
+
+### Update as needed
+
+Check if any of dependencies are outdated and thus need updates:
+
+```sh
+mix hex.outdated
+```
+
+Update:
+
+```sh
+mix deps.update --all
+```
+
+If you get this kind of error:
+
+```sh
+(Mix) Can't continue due to errors on dependencies
+```
+
+Then try:
+
+```sh
+rm -rf deps _build
+mix deps.update --all
+```
 
 
 ### Add Pow authentication
@@ -254,7 +286,7 @@ Warning: No view or template files generated for PowEmailConfirmation as no temp
 ```
 
 
-### Mailer support
+### Add mailer support
 
 Create a mailer mock module in `WEB_PATH/pow_mailer.ex`:
 
@@ -324,6 +356,130 @@ config :demo_elixir_phoenix_pow, :pow,
   # ...
   web_mailer_module: DemoElixirPhoenixPowWeb
 ```
+
+Visit http://localhost:4000/registration/new and you can now register then see a message "You'll need to confirm your e-mail before you can sign in. An e-mail confirmation link has been sent to you."
+
+
+### Add Bamboo.Phoenix for emails
+
+
+The Bamboo.Phoenix module renders emails with Phoenix layouts and views. See [HexDocs](https://hexdocs.pm/bamboo/Bamboo.Phoenix.html) and [Sending email with SMTP](https://www.phoenixframework.org/blog/sending-email-with-smtp).
+
+Edit `mix.deps` to add:
+
+Once we have a provider, we’ll need to add `bamboo` and `bamboo_smtp` as dependencies to our project. We’ll do that in the `deps/0` function in `mix.exs`. We will add AWS SES too.
+
+```elixir
+{:bamboo, "~> 0.7"},
+{:bamboo_smtp, "~> 1.2.1"},
+{:bamboo_ses_adapter, "~> 0.0.1"},
+```
+
+Update:
+
+```sh
+mix deps.get
+```
+
+TODO: do we edit `mix.exs` to add the `:bamboo` application?
+
+```elixir
+def application do
+  [mod: {MyApp, []},
+    applications: [
+      :phoenix,
+      :phoenix_html,
+      :cowboy,
+      :logger,
+      :gettext,
+      :phoenix_ecto,
+      :postgrex,
+      :bamboo
+    ]
+  ]
+end
+```
+
+Edit `WEB_PATH/pow_mailer.ex` file like so:
+
+```elixir
+defmodule DemoElixirPhoenixPow.PowMailer do
+  use Pow.Phoenix.Mailer
+  use Bamboo.Mailer, otp_app: :my_app
+
+  import Bamboo.Email
+
+  @impl true
+  def cast(%{user: user, subject: subject, text: text, html: html}) do
+    Bamboo.Email.new_email(
+      to: user.email,
+      from: "myapp@example.com",
+      subject: subject,
+      html_body: html,
+      text_body: text
+    )
+  end
+
+  @impl true
+  def process(email) do
+    deliver_now(email)
+  end
+end
+```
+
+Edit `config.exs` to add:
+
+```elixir
+config :demo_elixir_phoenix_pow, DemoElixirPhoenixPow.Mailer,
+  adapter: Bamboo.SMTPAdapter,
+  server: "smtp.domain",
+  port: 1025,
+  username: System.get_env("SMTP_USERNAME"),
+  password: System.get_env("SMTP_PASSWORD"),
+  tls: :if_available, # can be `:always` or `:never`
+  ssl: false, # can be `true`
+  retries: 1
+```
+
+Create `lib/demo_elixir_phoenix_pow/mailer.ex` to enable the app to send emails:
+
+```elixir
+defmodule DemoElixirPhoenixPow.Mailer do
+  use Bamboo.Mailer, otp_app: :demo_elixir_phoenix_pow
+end
+```
+
+Verify `config/config.exs` has the Pow mailer:
+
+```elixir
+config :demo_elixir_phoenix_pow, :pow,
+  user: DemoElixirPhoenixPow.Users.User,
+  repo: DemoElixirPhoenixPow.Repo,
+  mailer_backend: DemoElixirPhoenixPow.PowMailer
+```
+
+
+### Configure SMTP
+
+Add our SMTP details to file `config/config.exs`. These will be provided by the SMTP service you use, such as Amazon Web Services (AWS) Simple Email Service (SES), or Fastmail.com, so look at your account service information.
+
+Demos:
+
+* [Demo AWS SES SMTP](https://github.com/joelparkerhenderson/demo_aws_ses_smtp)
+
+* [Demo Fastmail SMTP](https://github.com/joelparkerhenderson/demo_fastmail_smtp)
+
+Set environment variables for SMTP_USERNAME and SMTP_PASSWORD.
+
+Example:
+
+```sh
+export SMTP_USERNAME="alice@example.com"
+export SMTP_PASSWORD="secret"
+```
+
+These environment variables will be accessed by our file `config/config.exs`.
+
 
 ## Learn more
 
