@@ -62,8 +62,9 @@ defmodule DemoElixirPhoenixPowWeb do
 
   def mailer_view do
     quote do
-      use Phoenix.View, root: "lib/my_app_web/templates",
-                        namespace: MyAppWeb
+      use Phoenix.View, 
+        root: "lib/demo_elixir_phoenix_pow/templates",
+        namespace: DemoElixirPhoenixPow
 
       use Phoenix.HTML
     end

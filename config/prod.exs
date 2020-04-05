@@ -53,3 +53,34 @@ config :logger, level: :info
 # Finally import the config/prod.secret.exs which loads secrets
 # and configuration from environment variables.
 import_config "prod.secret.exs"
+
+# This section recommended by https://github.com/fewlinesco/bamboo_smtp 
+config :demo_elixir_phoenix_pow, DemoElixirPhoenixPow.Mailer,
+  adapter: Bamboo.SMTPAdapter,
+  server: System.get_env("SMTP_SERVER"), # example: "smtp.example.com"
+  hostname: System.get_env("SMTP_HOSTNAME"), # example: "my.example.com"
+  port: System.get_env("SMTP_PORT"), # example: 1234
+  username: System.get_env("SMTP_USERNAME"), # example: "alice@example.com"
+  password: System.get_env("SMTP_PASSWORD"), # example: "mypassword"
+  tls: :if_available, # can be `:always` or `:never`
+  allowed_tls_versions: [:"tlsv1", :"tlsv1.1", :"tlsv1.2"], # or {:system, "ALLOWED_TLS_VERSIONS"} w/ comma seprated values (e.g. "tlsv1.1,tlsv1.2")
+  ssl: false, # can be `true`
+  retries:  1,
+  no_mx_lookups: false, # can be `true`
+  auth: :if_available # can be `:always`. If your smtp relay requires authentication set it to `:always`.
+
+# Configure Pow mailer to use Bamboo and SMTP and env vars.
+config :demo_elixir_phoenix_pow, DemoElixirPhoenixPowWeb.Mailer,
+  adapter: Bamboo.SMTPAdapter,
+  server: System.get_env("SMTP_SERVER"), # example: "smtp.example.com"
+  hostname: System.get_env("SMTP_HOSTNAME"), # example: "my.example.com"
+  port: System.get_env("SMTP_PORT"), # example: 1234
+  username: System.get_env("SMTP_USERNAME"), # example: "alice@example.com"
+  password: System.get_env("SMTP_PASSWORD"), # example: "mypassword"
+  tls: :if_available, # can be `:always` or `:never`
+  allowed_tls_versions: [:"tlsv1", :"tlsv1.1", :"tlsv1.2"], # or {:system, "ALLOWED_TLS_VERSIONS"} w/ comma seprated values (e.g. "tlsv1.1,tlsv1.2")
+  ssl: false, # can be `true`
+  retries: 1,
+  no_mx_lookups: false, # can be `true`
+  auth: :if_available # can be `:always`. If your smtp relay requires authentication set it to `:always`.
+

@@ -20,7 +20,7 @@ defmodule DemoElixirPhoenixPow.MixProject do
   def application do
     [
       mod: {DemoElixirPhoenixPow.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:bamboo, :bamboo_smtp, :logger, :runtime_tools]
     ]
   end
 
@@ -43,7 +43,10 @@ defmodule DemoElixirPhoenixPow.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:pow, "~> 1.0.18"}
+      {:pow, "~> 1.0.18"},
+      {:bamboo, "~> 1.4"},
+      {:bamboo_smtp, "~> 2.1.0"},
+      {:bamboo_ses_adapter, ">= 0.0.1"},
     ]
   end
 
